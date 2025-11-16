@@ -16,25 +16,23 @@ Take this as a quick personal project.
 
 ### Installation - How to Use
 
-- Compile or download the latest release .zip file
+- Download the latest release .zip file
 - Extract y-cruncher_gui.exe inside the y-cruncher folder (or wherever if you add y-cruncher to system PATH)
 - Start the GUI , select tests or use presets , select test duration or leave auto values. Then start the stress test.
 
 
   
-### Compile
+### Run the .py file
 
-1. Download y-cruncher from the official repository and extract to desired location
-2. Place `y-cruncher.exe` in the same directory as the GUI script
-3. Install required Python package:
+1. Install required Python package:
     ```bash
     pip install psutil
     ```
-4. Optional:
+2. Optional:
     ```bash
     pip install ttkthemes
     ```
-5. Execute the application:
+3. Execute the application:
     ```bash
     python y-cruncher_gui.py
     ```
@@ -52,5 +50,6 @@ Take this as a quick personal project.
 
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
+
 
 
