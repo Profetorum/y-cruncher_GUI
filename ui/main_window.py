@@ -10,7 +10,7 @@ from core.controller import ProcessController
 from core.models import TestConfig
 from .components import (
     ComponentTreeView, ConfigurationPanel, ControlPanel, 
-    ConsoleOutput, StatusBar
+    ConsoleOutput  
 )
 
 class YCruncherGUI:
@@ -64,13 +64,10 @@ class YCruncherGUI:
         self.console = ConsoleOutput(self.root)
         self.console.grid(row=4, column=0, padx=section_padding[0], pady=section_padding[1], sticky='nsew')
         
-        # Status bar
-        self.status_bar = StatusBar(self.root)
-        self.status_bar.grid(row=5, column=0, padx=section_padding[0], pady=(5, 10), sticky='ew')
         
         # Configure grid weights
         self.root.grid_rowconfigure(2, weight=1)
-        self.root.grid_rowconfigure(4, weight=3)
+        self.root.grid_rowconfigure(4, weight=3)  # Console gets more space
         self.root.grid_columnconfigure(0, weight=1)
     
     def _setup_bindings(self):
@@ -89,29 +86,23 @@ class YCruncherGUI:
         if self.tree_view.toggle_selection(event):
             enabled_count = len(self.test_manager.get_enabled_components())
             self.config_panel.update_enabled_count(enabled_count)
-            status = f"Ready - {enabled_count} test(s) selected" if enabled_count > 0 else "Ready - Select tests and click Start"
-            self.status_bar.set_text(status)
     
     def _on_select_all(self):
         self.test_manager.enable_all()
         self.tree_view.refresh()
         enabled_count = len(self.test_manager.get_enabled_components())
         self.config_panel.update_enabled_count(enabled_count)
-        self.status_bar.set_text(f"Ready - {enabled_count} test(s) selected")
     
     def _on_deselect_all(self):
         self.test_manager.disable_all()
         self.tree_view.refresh()
         self.config_panel.update_enabled_count(0)
-        self.status_bar.set_text("Ready - Select tests and click Start")
     
     def _on_apply_preset(self, preset_name):
         self.test_manager.apply_preset(preset_name)
         self.tree_view.refresh()
         enabled_count = len(self.test_manager.get_enabled_components())
         self.config_panel.update_enabled_count(enabled_count)
-        description = TEST_PRESETS[preset_name]["description"]
-        self.status_bar.set_text(f"Applied {preset_name} preset: {description} ({enabled_count} tests selected)")
     
     def _on_start_test(self):
         valid, message = self.config_panel.validate()
@@ -131,15 +122,14 @@ class YCruncherGUI:
         self.console.write(f"Using calculated values based on {len(enabled_components)} selected tests", 'info')
         
         success, message = self.process_controller.start_test(
-            config, enabled_components, self._on_console_output, self._on_status_update
+            config, enabled_components, self._on_console_output
         )
         
         if success:
             self.control_panel.set_test_state(True)
-            self.status_bar.set_text(f"Running stress test with {len(enabled_components)} components...")
+
         else:
             self.console.write(f"Error: {message}", 'error')
-            self.status_bar.set_text(f"Error: {message}")
             messagebox.showerror("Error", message)
     
     def _build_command_display(self, config: TestConfig, enabled_components: list) -> str:
@@ -160,15 +150,11 @@ class YCruncherGUI:
         if success:
             self.control_panel.set_test_state(False)
             self.console.write(message, 'info')
-            self.status_bar.set_text(f"{message} - Ready for new test")
+            # Remove status bar update
         else:
             self.console.write(f"Error: {message}", 'error')
-            self.status_bar.set_text(f"Error: {message}")
             messagebox.showerror("Error", message)
     
     def _on_console_output(self, text: str):
         self.console.write_ansi(text)
     
-    def _on_status_update(self, status: str):
-        self.control_panel.set_test_state(False)
-        self.status_bar.set_text(status)

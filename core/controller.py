@@ -20,7 +20,7 @@ class ProcessController:
         self.is_running = False
     
     def start_test(self, config: TestConfig, enabled_components: List[str], 
-                   output_callback, status_callback) -> Tuple[bool, str]:
+                   output_callback) -> Tuple[bool, str]: 
         """Start the stress test process"""
         if self.is_running:
             return False, "Test is already running!"
@@ -47,7 +47,7 @@ class ProcessController:
             self.pid = self.process.pid
             self.is_running = True
             
-            self._start_monitoring_threads(output_callback, status_callback)
+            self._start_monitoring_threads(output_callback)
             return True, "Test started successfully"
             
         except FileNotFoundError:
@@ -64,12 +64,12 @@ class ProcessController:
             return startupinfo
         return None
     
-    def _start_monitoring_threads(self, output_callback, status_callback):
+    def _start_monitoring_threads(self, output_callback): 
         """Start threads to monitor process output and completion"""
         threads = [
             threading.Thread(target=self._monitor_output, args=(self.process.stdout, output_callback), daemon=True),
             threading.Thread(target=self._monitor_output, args=(self.process.stderr, output_callback), daemon=True),
-            threading.Thread(target=self._wait_for_completion, args=(output_callback, status_callback), daemon=True)
+            threading.Thread(target=self._wait_for_completion, args=(output_callback,), daemon=True)
         ]
         
         for thread in threads:
@@ -112,7 +112,7 @@ class ProcessController:
             except OSError:
                 pass
     
-    def _wait_for_completion(self, output_callback, status_callback) -> None:
+    def _wait_for_completion(self, output_callback) -> None:
         """Wait for process completion and cleanup"""
         try:
             return_code = self.process.wait()
@@ -123,7 +123,6 @@ class ProcessController:
         finally:
             self.is_running = False
             output_callback("\n> Test completed or stopped.\n")
-            status_callback("Test completed")
             self._cleanup()
     
     def stop_test(self) -> Tuple[bool, str]:
