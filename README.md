@@ -14,7 +14,15 @@ Take this as a quick personal project.
     - `tkinter`
     - `psutil`
 
-### Installation
+### Installation - How to Use
+
+- Compile or download the latest release .zip file
+- Extract y-cruncher_gui.exe inside the y-cruncher folder (or wherever if you add y-cruncher to system PATH)
+- Start the GUI , select tests or use presets , select test duration or leave auto values. Then start the stress test.
+
+
+  
+### Compile
 
 1. Download y-cruncher from the official repository and extract to desired location
 2. Place `y-cruncher.exe` in the same directory as the GUI script
@@ -45,8 +53,9 @@ Take this as a quick personal project.
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
 
-### How to Use
+### Installation - How to Use
 
 - Compile or download the latest release .zip file
 - Extract y-cruncher_gui.exe inside the y-cruncher folder (or wherever if you add y-cruncher to system PATH)
 - Start the GUI , select tests or use presets , select test duration or leave auto values. Then start the stress test.
+
