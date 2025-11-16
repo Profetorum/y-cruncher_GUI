@@ -44,7 +44,7 @@ Take this as a quick personal project.
 	
 ### Features
 
-1. CPU , CPU+RAM , and RAM-focused test presets
+1. CPU , CPU+RAM , and RAM-focused stresstest presets
 2. Checkbox interface with CPU-RAM load indicators for all tests
 3. Select All/Deselect All toggles
 4. Time Limit automatically calculates based on selected tests (1800s × test count) - Manual settings maintained when feasible
@@ -57,6 +57,7 @@ Take this as a quick personal project.
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
 3. Tests selection is hardcoded
+
 
 
 
