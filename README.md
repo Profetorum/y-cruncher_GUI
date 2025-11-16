@@ -38,7 +38,7 @@ Take this as a quick personal project.
     ```
 3. Execute the application:
     ```bash
-    python y-cruncher_gui.py
+    python main.py
     ```
 
 	
@@ -57,6 +57,7 @@ Take this as a quick personal project.
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
 3. Tests selection is hardcoded
+
 
 
 
