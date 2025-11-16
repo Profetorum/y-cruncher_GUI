@@ -39,10 +39,10 @@ Take this as a quick personal project.
 	
 ### Features
 
-1. One-Click Presets: CPU-focused, CPU+RAM balanced, and RAM-focused test configurations
-2. Component Selection: Checkbox interface with CPU-RAM load indicators for all tests
-3. Select All/Deselect All for rapid test configuration
-4. Time Limit automatically calculates based on selected tests (1800s × test count) - Manual settings maintained when technically feasible
+1. StressTest Presets: CPU-focused, CPU+RAM, and RAM-focused test presets
+2. Checkbox interface with CPU-RAM load indicators for all tests
+3. Select All/Deselect All toggles
+4. Time Limit automatically calculates based on selected tests (1800s × test count) - Manual settings maintained when feasible
 5. Console Output
 6. A decently looking - lightweight user interface
 
@@ -50,6 +50,7 @@ Take this as a quick personal project.
 
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
+
 
 
 
