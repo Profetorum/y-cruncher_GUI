@@ -5,7 +5,8 @@ Just a (lightweight) GUI for the StressTest part of y-cruncher, mainly for testi
 DISCLAIMER: the code has been cleaned and the UI made graphically appealing by AI.
 Take this as a quick personal project.
 
-<img width="799" height="928" alt="{BC3968DE-EBCF-42D2-AC88-81D84141AA0F}" src="https://github.com/user-attachments/assets/3652c6ce-3059-4ba1-8445-f7b97ee6f05e" />
+<img width="799" height="931" alt="{7CC94B43-357C-4482-9F38-9AE140EE22FA}" src="https://github.com/user-attachments/assets/6bff379e-a4c2-477b-87f4-ac50cda0ed04" />
+
 
 
 
@@ -56,6 +57,7 @@ Take this as a quick personal project.
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
 3. Tests selection is hardcoded
+
 
 
 
