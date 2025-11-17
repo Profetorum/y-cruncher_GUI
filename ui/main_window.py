@@ -122,12 +122,11 @@ class YCruncherGUI:
         self.console.write(f"Using calculated values based on {len(enabled_components)} selected tests", 'info')
         
         success, message = self.process_controller.start_test(
-            config, enabled_components, self._on_console_output
+            config, enabled_components, self._on_console_output, self._on_test_completion
         )
         
         if success:
             self.control_panel.set_test_state(True)
-
         else:
             self.console.write(f"Error: {message}", 'error')
             messagebox.showerror("Error", message)
@@ -145,12 +144,13 @@ class YCruncherGUI:
         return ' '.join(cmd)
     
     def _on_stop_test(self):
+
         success, message = self.process_controller.stop_test()
         
         if success:
             self.control_panel.set_test_state(False)
             self.console.write(message, 'info')
-            # Remove status bar update
+            
         else:
             self.console.write(f"Error: {message}", 'error')
             messagebox.showerror("Error", message)
@@ -158,3 +158,13 @@ class YCruncherGUI:
     def _on_console_output(self, text: str):
         self.console.write_ansi(text)
     
+    def _on_test_completion(self, return_code, exit_code):
+        """Called when the test process completes (either successfully or with errors)"""
+        # Schedule GUI update on main thread
+        self.root.after(0, self._handle_test_completion, return_code, exit_code)
+    
+    def _handle_test_completion(self, return_code, exit_code):
+        """Handle test completion on the main GUI thread"""
+        
+        # Re-enable the Start button and disable Stop button
+        self.control_panel.set_test_state(False)

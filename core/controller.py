@@ -4,7 +4,7 @@ import threading
 import sys
 import psutil
 import os
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable
 from .models import TestConfig
 from config.settings import TEST_CONFIG
 from utils.helpers import check_ycruncher_present
@@ -12,15 +12,17 @@ from utils.helpers import check_ycruncher_present
 class ProcessController:
     """Handles y-cruncher process execution and control"""
     
-    __slots__ = ('process', 'pid', 'is_running')
+    __slots__ = ('process', 'pid', 'is_running', 'completion_callback', 'user_stopped')
     
     def __init__(self):
         self.process: Optional[subprocess.Popen] = None
         self.pid: Optional[int] = None
         self.is_running = False
+        self.completion_callback: Optional[Callable] = None
+        self.user_stopped = False
     
     def start_test(self, config: TestConfig, enabled_components: List[str], 
-                   output_callback) -> Tuple[bool, str]: 
+                   output_callback, completion_callback: Optional[Callable] = None) -> Tuple[bool, str]: 
         """Start the stress test process"""
         if self.is_running:
             return False, "Test is already running!"
@@ -46,6 +48,8 @@ class ProcessController:
             )
             self.pid = self.process.pid
             self.is_running = True
+            self.user_stopped = False
+            self.completion_callback = completion_callback
             
             self._start_monitoring_threads(output_callback)
             return True, "Test started successfully"
@@ -114,21 +118,41 @@ class ProcessController:
     
     def _wait_for_completion(self, output_callback) -> None:
         """Wait for process completion and cleanup"""
+        return_code = None
+        error_occurred = False
+        
         try:
             return_code = self.process.wait()
             if return_code != 0:
+                error_occurred = True
                 output_callback(f"\n> Process exited with code: {return_code}\n")
         except Exception:
-            pass
+            error_occurred = True
         finally:
+            # Check if this was a user-initiated stop
+            was_user_stopped = self.user_stopped
+            
             self.is_running = False
-            output_callback("\n> Test completed or stopped.\n")
+            
+            if not was_user_stopped:
+                if error_occurred:
+                    output_callback("\n> Test stopped with errors.\n")
+                else:
+                    output_callback("\n> Test completed successfully.\n")
+                
+                # Notify GUI that process has stopped (only if not user-stopped)
+                if self.completion_callback:
+                    self.completion_callback(return_code, error_occurred)
+            
             self._cleanup()
     
     def stop_test(self) -> Tuple[bool, str]:
         """Stop the running test process"""
         if not self.is_running or not self.process:
             return False, "No test is running!"
+        
+        # Mark as user-stopped to prevent duplicate callbacks
+        self.user_stopped = True
         
         try:
             if not psutil.pid_exists(self.pid):
@@ -143,6 +167,7 @@ class ProcessController:
             self._cleanup()
             return True, "Process already terminated"
         except Exception as e:
+            self.user_stopped = False  # Reset on error
             return False, f"Error stopping test: {str(e)}"
     
     def _terminate_process_tree(self):
@@ -178,3 +203,5 @@ class ProcessController:
         self.is_running = False
         self.process = None
         self.pid = None
+        self.completion_callback = None
+        self.user_stopped = False
