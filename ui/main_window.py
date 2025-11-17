@@ -4,14 +4,16 @@ from tkinter import ttk, messagebox
 from typing import Dict, Callable
 
 from config.settings import UI_CONFIG
-from config.presets import TEST_PRESETS
 from core.manager import TestManager
 from core.controller import ProcessController
 from core.models import TestConfig
-from .components import (
-    ComponentTreeView, ConfigurationPanel, ControlPanel, 
-    ConsoleOutput  
-)
+
+# Use absolute imports
+from ui.frames.header import HeaderFrame
+from ui.frames.configuration import ConfigurationFrame
+from ui.frames.components import ComponentsFrame
+from ui.frames.controls import ControlsFrame
+from ui.frames.console import ConsoleFrame
 
 class YCruncherGUI:
     """Main application class"""
@@ -34,44 +36,40 @@ class YCruncherGUI:
         self.test_config = TestConfig()
     
     def _create_ui(self):
-        """Create the user interface"""
+        """Create the user interface using modular frames"""
         section_padding = UI_CONFIG['layout']['section_padding']
         
-        # Header
-        ttk.Label(self.root, text=UI_CONFIG['window']['title'], font=UI_CONFIG['fonts']['header']).grid(
-            row=0, column=0, padx=section_padding[0], pady=(10, 5), sticky='w')
+        # Create frames
+        self.header = HeaderFrame(self.root)
+        self.config_panel = ConfigurationFrame(self.root, self.test_config)
+        self.components_frame = ComponentsFrame(self.root, self.test_manager)
+        self.controls_frame = ControlsFrame(self.root, self._get_callbacks())
+        self.console = ConsoleFrame(self.root)
         
-        # Configuration
-        self.config_panel = ConfigurationPanel(self.root, self.test_config)
+        # Layout frames
+        self.header.grid(row=0, column=0, padx=section_padding[0], pady=(10, 5), sticky='w')
         self.config_panel.grid(row=1, column=0, padx=section_padding[0], pady=section_padding[1], sticky='ew')
-        
-        # Component selection
-        self.tree_view = ComponentTreeView(self.root, self.test_manager)
-        self.tree_view.grid(row=2, column=0, padx=section_padding[0], pady=section_padding[1], sticky='nsew')
-        
-        # Controls
-        callbacks = {
-            'select_all': self._on_select_all,
-            'deselect_all': self._on_deselect_all,
-            'apply_preset': self._on_apply_preset,
-            'start_test': self._on_start_test,
-            'stop_test': self._on_stop_test
-        }
-        self.control_panel = ControlPanel(self.root, callbacks)
-        self.control_panel.grid(row=3, column=0, padx=section_padding[0], pady=section_padding[1], sticky='ew')
-        
-        # Console
-        self.console = ConsoleOutput(self.root)
+        self.components_frame.grid(row=2, column=0, padx=section_padding[0], pady=section_padding[1], sticky='nsew')
+        self.controls_frame.grid(row=3, column=0, padx=section_padding[0], pady=section_padding[1], sticky='ew')
         self.console.grid(row=4, column=0, padx=section_padding[0], pady=section_padding[1], sticky='nsew')
-        
         
         # Configure grid weights
         self.root.grid_rowconfigure(2, weight=1)
         self.root.grid_rowconfigure(4, weight=3)  # Console gets more space
         self.root.grid_columnconfigure(0, weight=1)
     
+    def _get_callbacks(self) -> Dict[str, Callable]:
+        """Return dictionary of callback functions"""
+        return {
+            'select_all': self._on_select_all,
+            'deselect_all': self._on_deselect_all,
+            'apply_preset': self._on_apply_preset,
+            'start_test': self._on_start_test,
+            'stop_test': self._on_stop_test
+        }
+    
     def _setup_bindings(self):
-        self.tree_view.bind_events(self._on_tree_click)
+        self.components_frame.bind_events(self._on_tree_click)
         self.root.protocol("WM_DELETE_WINDOW", self.safe_shutdown)
     
     def safe_shutdown(self):
@@ -83,25 +81,25 @@ class YCruncherGUI:
         self.root.destroy()
     
     def _on_tree_click(self, event):
-        if self.tree_view.toggle_selection(event):
-            enabled_count = len(self.test_manager.get_enabled_components())
+        if self.components_frame.toggle_selection(event):
+            enabled_count = self.components_frame.get_enabled_count()
             self.config_panel.update_enabled_count(enabled_count)
     
     def _on_select_all(self):
         self.test_manager.enable_all()
-        self.tree_view.refresh()
-        enabled_count = len(self.test_manager.get_enabled_components())
+        self.components_frame.refresh()
+        enabled_count = self.components_frame.get_enabled_count()
         self.config_panel.update_enabled_count(enabled_count)
     
     def _on_deselect_all(self):
         self.test_manager.disable_all()
-        self.tree_view.refresh()
+        self.components_frame.refresh()
         self.config_panel.update_enabled_count(0)
     
     def _on_apply_preset(self, preset_name):
         self.test_manager.apply_preset(preset_name)
-        self.tree_view.refresh()
-        enabled_count = len(self.test_manager.get_enabled_components())
+        self.components_frame.refresh()
+        enabled_count = self.components_frame.get_enabled_count()
         self.config_panel.update_enabled_count(enabled_count)
     
     def _on_start_test(self):
@@ -126,7 +124,7 @@ class YCruncherGUI:
         )
         
         if success:
-            self.control_panel.set_test_state(True)
+            self.controls_frame.set_test_state(True)
         else:
             self.console.write(f"Error: {message}", 'error')
             messagebox.showerror("Error", message)
@@ -144,13 +142,11 @@ class YCruncherGUI:
         return ' '.join(cmd)
     
     def _on_stop_test(self):
-
         success, message = self.process_controller.stop_test()
         
         if success:
-            self.control_panel.set_test_state(False)
+            self.controls_frame.set_test_state(False)
             self.console.write(message, 'info')
-            
         else:
             self.console.write(f"Error: {message}", 'error')
             messagebox.showerror("Error", message)
@@ -159,12 +155,9 @@ class YCruncherGUI:
         self.console.write_ansi(text)
     
     def _on_test_completion(self, return_code, exit_code):
-        """Called when the test process completes (either successfully or with errors)"""
-        # Schedule GUI update on main thread
+        """Called when the test process completes"""
         self.root.after(0, self._handle_test_completion, return_code, exit_code)
     
     def _handle_test_completion(self, return_code, exit_code):
         """Handle test completion on the main GUI thread"""
-        
-        # Re-enable the Start button and disable Stop button
-        self.control_panel.set_test_state(False)
+        self.controls_frame.set_test_state(False)
