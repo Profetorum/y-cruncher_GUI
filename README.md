@@ -6,7 +6,8 @@ DISCLAIMER: the code has been cleaned and the UI made graphically appealing by A
 Take this as a quick personal project.
 
 
-<img width="801" height="930" alt="{DA2810F6-3234-4E44-8A3B-02764730F9A2}" src="https://github.com/user-attachments/assets/705d0f6e-5f00-4bfd-a1dc-9de5984c441c" />
+<img width="798" height="927" alt="{9FC62A4F-028F-4104-AACB-AEDA137832BE}" src="https://github.com/user-attachments/assets/37435f5a-d7dd-4d93-9046-efc9a657b70d" />
+
 
 
 
@@ -58,6 +59,7 @@ Take this as a quick personal project.
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
 3. Tests selection is hardcoded
+
 
 
 
