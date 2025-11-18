@@ -59,9 +59,10 @@ class ComponentTreeView:
         self.tree.bind('<Button-1>', callback)
     
     def toggle_selection(self, event) -> bool:
-        """Handle checkbox toggling"""
+        """Handle checkbox toggling - now works on entire row"""
         region = self.tree.identify_region(event.x, event.y)
-        if region == "cell" and self.tree.identify_column(event.x) == '#1':
+        if region == "cell":
+            # Toggle regardless of which column was clicked (entire row is clickable)
             item = self.tree.identify_row(event.y)
             if item:
                 self._toggle_item(item)

@@ -32,8 +32,8 @@ class ControlsFrame:
                                   command=self.callbacks['stop_test'], state=tk.DISABLED)
         self.stop_btn.grid(row=0, column=1, padx=(0, 15), pady=padding, sticky='w')
         
-        # Spinner indicator (initially hidden)
-        self.spinner_label = ttk.Label(self.frame, text="", font=('Arial', 14),
+        # Spinner indicator with fixed width
+        self.spinner_label = ttk.Label(self.frame, text="", font=('Arial', 14), width=2,
                                       foreground=UI_CONFIG['colors']['info_text'])
         self.spinner_label.grid(row=0, column=2, padx=(0, 15), pady=padding, sticky='w')
         
