@@ -2,6 +2,7 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import Tuple
+import re
 
 from config.settings import UI_CONFIG, TEST_CONFIG
 from core.models import TestConfig
@@ -15,10 +16,15 @@ class ConfigurationFrame:
         self.enabled_count = 0
         self.time_limit_manual = False
         self._correcting_time_limit = False
+        self.save_callback = None
         
         self._create_widgets()
         self._setup_bindings()
         self._update_display()
+    
+    def set_save_callback(self, callback):
+        """Set callback for saving settings"""
+        self.save_callback = callback
     
     def _create_widgets(self):
         """Create configuration widgets"""
@@ -71,8 +77,16 @@ class ConfigurationFrame:
     
     def _setup_bindings(self):
         self.tl_entry.bind('<KeyRelease>', self._on_time_limit_change)
-        self.tl_entry.bind('<FocusOut>', self._validate_time_limit)
-        self.d_entry.bind('<FocusOut>', self._validate_time_limit)
+        self.tl_entry.bind('<FocusOut>', self._on_setting_change)
+        self.d_entry.bind('<FocusOut>', self._on_setting_change)
+        self.m_entry.bind('<FocusOut>', self._on_setting_change)
+    
+    def _on_setting_change(self, event=None):
+        """Handle setting changes and trigger save"""
+        self._validate_time_limit()
+        self._validate_memory()
+        if self.save_callback:
+            self.save_callback()
     
     def _on_time_limit_change(self, event):
         if self._correcting_time_limit:
@@ -84,6 +98,10 @@ class ConfigurationFrame:
             self._update_auto_values()
         else:
             self.time_limit_manual = True
+        
+        # Trigger save on change
+        if self.save_callback:
+            self.save_callback()
     
     def _validate_time_limit(self, event=None):
         if self._correcting_time_limit or self.enabled_count == 0:
@@ -102,11 +120,28 @@ class ConfigurationFrame:
         except ValueError:
             pass
     
+    def _validate_memory(self, event=None):
+        """Validate memory format"""
+        memory = self.m_entry.get().strip()
+        if not memory or memory.lower() == "auto":
+            return
+            
+        # Validate memory format: numbers followed by K,M,G (case insensitive)
+        pattern = r'^\d+[KMGkmg]$'
+        if not re.match(pattern, memory):
+            self.validation_label.config(
+                text="Memory format invalid. Use format like: 64M, 128M, 8G, 16G"
+            )
+            self.frame.after(5000, lambda: self.validation_label.config(text=""))
+    
     def _get_per_test_value(self):
         per_test_str = self.d_entry.get().strip()
         if per_test_str.lower() == "auto":
             return TEST_CONFIG['default_per_test_duration']
-        return int(per_test_str)
+        try:
+            return int(per_test_str)
+        except ValueError:
+            return TEST_CONFIG['default_per_test_duration']
     
     def _correct_time_limit(self, min_required):
         self._correcting_time_limit = True
@@ -136,6 +171,7 @@ class ConfigurationFrame:
         if self.enabled_count > 0:
             time_limit = self.tl_entry.get().strip()
             duration = self.d_entry.get().strip()
+            memory = self.m_entry.get().strip()
             
             try:
                 time_int = int(time_limit)
@@ -147,9 +183,10 @@ class ConfigurationFrame:
             
             time_info = f"Time Limit: {time_limit} sec{status_note}"
             duration_info = f"Per Test: {duration} sec" if duration.lower() != "auto" else f"Per Test: Auto (default: {TEST_CONFIG['default_per_test_duration']} sec)"
+            memory_info = f"Memory: {memory}" if memory.lower() != "auto" else "Memory: Auto"
             
             self.info_label.config(
-                text=f"{time_info} | {duration_info} | Based on {self.enabled_count} selected tests"
+                text=f"{time_info} | {duration_info} | {memory_info} | Based on {self.enabled_count} selected tests"
             )
         else:
             self.info_label.config(text="Select tests to see calculated values")
@@ -163,10 +200,18 @@ class ConfigurationFrame:
     def validate(self) -> Tuple[bool, str]:
         config = self.get_config()
         
+        # Validate time limit and duration
         for field, value in [("Time limit", config.time_limit), ("Duration per test", config.duration_per_test)]:
             if value and value.lower() != "auto" and not value.isdigit():
                 return False, f"{field} must be a number or 'Auto'!"
         
+        # Validate memory format
+        if config.memory and config.memory.lower() != "auto":
+            pattern = r'^\d+[KMGkmg]$'
+            if not re.match(pattern, config.memory):
+                return False, "Memory format invalid. Use format like: 64M, 128M, 8G, 16G"
+        
+        # Validate time limit sufficiency
         if (config.time_limit and config.time_limit.isdigit() and self.enabled_count > 0):
             time_limit = int(config.time_limit)
             per_test = self._get_per_test_value()

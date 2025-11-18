@@ -7,6 +7,7 @@ from config.settings import UI_CONFIG
 from core.manager import TestManager
 from core.controller import ProcessController
 from core.models import TestConfig
+from utils.settings_manager import SettingsManager
 
 # Absolute imports for all frames
 from ui.frames.header import HeaderFrame
@@ -22,6 +23,7 @@ class YCruncherGUI:
         self.root = root
         self._setup_window()
         self._initialize_components()
+        self._load_settings()
         self._create_ui()
         self._setup_bindings()
     
@@ -34,6 +36,24 @@ class YCruncherGUI:
         self.test_manager = TestManager()
         self.process_controller = ProcessController()
         self.test_config = TestConfig()
+        self.settings_manager = SettingsManager()
+    
+    def _load_settings(self):
+        """Load settings from INI file or create default"""
+        if not self.settings_manager.load_settings(self.test_config, self.test_manager):
+            # Create default settings file if it doesn't exist
+            self.settings_manager.create_default_settings(self.test_config, self.test_manager)
+            print("Created default settings file")
+        else:
+            print("Loaded settings from file")
+    
+    def _save_settings(self):
+        """Save current settings to INI file"""
+        # Update test_config from UI before saving
+        if hasattr(self, 'config_panel'):
+            self.config_panel.get_config()
+        self.settings_manager.save_settings(self.test_config, self.test_manager)
+        print("Settings saved")
     
     def _create_ui(self):
         """Create the user interface using modular frames"""
@@ -45,6 +65,9 @@ class YCruncherGUI:
         self.components_frame = ComponentsFrame(self.root, self.test_manager)
         self.controls_frame = ControlsFrame(self.root, self._get_callbacks())
         self.console = ConsoleFrame(self.root)
+        
+        # Set save callback for configuration panel
+        self.config_panel.set_save_callback(self._save_settings)
         
         # Layout frames
         self.header.grid(row=0, column=0, padx=section_padding[0], pady=(10, 5), sticky='w')
@@ -74,6 +97,9 @@ class YCruncherGUI:
     
     def safe_shutdown(self):
         """Safely shutdown the application"""
+        # Save settings before exit
+        self._save_settings()
+        
         if self.process_controller.is_running:
             self.console.write("Stopping running test before exit...", 'info')
             success, message = self.process_controller.stop_test()
@@ -85,6 +111,8 @@ class YCruncherGUI:
         if self.components_frame.toggle_selection(event):
             enabled_count = self.components_frame.get_enabled_count()
             self.config_panel.update_enabled_count(enabled_count)
+            # Save settings when selection changes
+            self._save_settings()
     
     def _on_select_all(self):
         self.test_manager.enable_all()
@@ -92,12 +120,16 @@ class YCruncherGUI:
         enabled_count = self.components_frame.get_enabled_count()
         self.config_panel.update_enabled_count(enabled_count)
         self.console.write("All components selected", 'info')
+        # Save settings
+        self._save_settings()
     
     def _on_deselect_all(self):
         self.test_manager.disable_all()
         self.components_frame.refresh()
         self.config_panel.update_enabled_count(0)
         self.console.write("All components deselected", 'info')
+        # Save settings
+        self._save_settings()
     
     def _on_apply_preset(self, preset_name):
         from config.presets import TEST_PRESETS
@@ -113,6 +145,8 @@ class YCruncherGUI:
         
         description = TEST_PRESETS[preset_name]["description"]
         self.console.write(f"Applied preset '{preset_name}': {description}", 'info')
+        # Save settings
+        self._save_settings()
     
     def _on_start_test(self):
         # Validate configuration
@@ -191,5 +225,4 @@ class YCruncherGUI:
     
     def _handle_test_completion(self, return_code, exit_code):
         """Handle test completion on the main GUI thread"""
-        # Simply update the UI state without any completion messages
         self.controls_frame.set_test_state(False)
