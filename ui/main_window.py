@@ -8,7 +8,7 @@ from core.manager import TestManager
 from core.controller import ProcessController
 from core.models import TestConfig
 
-# Use absolute imports
+# Absolute imports for all frames
 from ui.frames.header import HeaderFrame
 from ui.frames.configuration import ConfigurationFrame
 from ui.frames.components import ComponentsFrame
@@ -39,7 +39,7 @@ class YCruncherGUI:
         """Create the user interface using modular frames"""
         section_padding = UI_CONFIG['layout']['section_padding']
         
-        # Create frames
+        # Create frames using absolute imports
         self.header = HeaderFrame(self.root)
         self.config_panel = ConfigurationFrame(self.root, self.test_config)
         self.components_frame = ComponentsFrame(self.root, self.test_manager)
@@ -73,6 +73,7 @@ class YCruncherGUI:
         self.root.protocol("WM_DELETE_WINDOW", self.safe_shutdown)
     
     def safe_shutdown(self):
+        """Safely shutdown the application"""
         if self.process_controller.is_running:
             self.console.write("Stopping running test before exit...", 'info')
             success, message = self.process_controller.stop_test()
@@ -90,46 +91,68 @@ class YCruncherGUI:
         self.components_frame.refresh()
         enabled_count = self.components_frame.get_enabled_count()
         self.config_panel.update_enabled_count(enabled_count)
+        self.console.write("All components selected", 'info')
     
     def _on_deselect_all(self):
         self.test_manager.disable_all()
         self.components_frame.refresh()
         self.config_panel.update_enabled_count(0)
+        self.console.write("All components deselected", 'info')
     
     def _on_apply_preset(self, preset_name):
+        from config.presets import TEST_PRESETS
+        
+        if preset_name not in TEST_PRESETS:
+            self.console.write(f"Error: Preset '{preset_name}' not found", 'error')
+            return
+            
         self.test_manager.apply_preset(preset_name)
         self.components_frame.refresh()
         enabled_count = self.components_frame.get_enabled_count()
         self.config_panel.update_enabled_count(enabled_count)
+        
+        description = TEST_PRESETS[preset_name]["description"]
+        self.console.write(f"Applied preset '{preset_name}': {description}", 'info')
     
     def _on_start_test(self):
+        # Validate configuration
         valid, message = self.config_panel.validate()
         if not valid:
             messagebox.showwarning("Configuration Error", message)
             return
         
+        # Check if components are selected
         enabled_components = self.test_manager.get_enabled_components()
         if not enabled_components:
             messagebox.showwarning("Selection Error", "Please select at least one component!")
             return
         
+        # Get configuration and build command
         config = self.config_panel.get_config()
         cmd = self._build_command_display(config, enabled_components)
         
-        self.console.write(f"Starting: {cmd}", 'command')
-        self.console.write(f"Using calculated values based on {len(enabled_components)} selected tests", 'info')
+        # Show start information
+        self.console.write("=" * 60, 'info')
+        self.console.write("STARTING STRESS TEST", 'info')
+        self.console.write("=" * 60, 'info')
+        self.console.write(f"Command: {cmd}", 'command')
+        self.console.write(f"Configuration: {len(enabled_components)} tests selected", 'info')
+        self.console.write("", 'info')
         
+        # Start the test
         success, message = self.process_controller.start_test(
             config, enabled_components, self._on_console_output, self._on_test_completion
         )
         
         if success:
             self.controls_frame.set_test_state(True)
+            self.console.write("Test process started successfully", 'info')
         else:
-            self.console.write(f"Error: {message}", 'error')
-            messagebox.showerror("Error", message)
+            self.console.write(f"Error starting test: {message}", 'error')
+            messagebox.showerror("Start Error", message)
     
     def _build_command_display(self, config: TestConfig, enabled_components: list) -> str:
+        """Build command string for display purposes"""
         cmd = ["y-cruncher.exe", "colors:1", "console:linux-vterm", "stress"]
         
         if config.memory.strip() and config.memory.lower() != "auto":
@@ -142,22 +165,31 @@ class YCruncherGUI:
         return ' '.join(cmd)
     
     def _on_stop_test(self):
+        """Stop the currently running test"""
+        if not self.process_controller.is_running:
+            self.console.write("No test is currently running", 'info')
+            return
+            
+        self.console.write("Stopping test...", 'info')
         success, message = self.process_controller.stop_test()
         
         if success:
             self.controls_frame.set_test_state(False)
-            self.console.write(message, 'info')
+            self.console.write("Test stopped successfully", 'info')
         else:
-            self.console.write(f"Error: {message}", 'error')
-            messagebox.showerror("Error", message)
+            self.console.write(f"Error stopping test: {message}", 'error')
+            messagebox.showerror("Stop Error", message)
     
     def _on_console_output(self, text: str):
+        """Handle console output from the test process"""
         self.console.write_ansi(text)
     
     def _on_test_completion(self, return_code, exit_code):
         """Called when the test process completes"""
+        # Schedule GUI update on main thread
         self.root.after(0, self._handle_test_completion, return_code, exit_code)
     
     def _handle_test_completion(self, return_code, exit_code):
         """Handle test completion on the main GUI thread"""
+        # Simply update the UI state without any completion messages
         self.controls_frame.set_test_state(False)
