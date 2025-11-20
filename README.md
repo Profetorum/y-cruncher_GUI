@@ -22,8 +22,8 @@ Take this as a quick personal project.
 
 ### Installation - How to Use
 
-- Download the [latest release](https://github.com/Profetorum/y-cruncher_GUI/releases) .zip file ( [y-cruncher 0.8.6](https://www.numberworld.org/y-cruncher/) required )
-- Extract y-cruncher_gui.exe inside the y-cruncher folder (or wherever if you add y-cruncher to system PATH)
+- Download the [latest release](https://github.com/Profetorum/y-cruncher_GUI/releases) .zip file ( [y-cruncher 0.8.6](https://www.numberworld.org/y-cruncher/) required or automatically downloaded )
+- Extract y-cruncher_gui.exe
 - Start the GUI , select tests or use presets , select test duration or leave auto values. Then start the stress test.
 
 
@@ -52,6 +52,8 @@ Take this as a quick personal project.
 4. Time Limit automatically calculates based on selected tests (1800s × test count) - Manual settings maintained when feasible
 5. Console Output
 6. A decently looking - lightweight user interface
+7. .ini file saving tests selection / loading them on startup
+8. Automatic y-cruncher download if not present
    
 
 ### Known Issues
@@ -59,6 +61,7 @@ Take this as a quick personal project.
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
 3. Tests selection is hardcoded
+
 
 
 
