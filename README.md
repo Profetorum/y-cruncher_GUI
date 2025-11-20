@@ -28,7 +28,7 @@ Take this as a quick personal project.
 
 
   
-### Run the .py file
+### Compile
 
 1. Install required Python package:
     ```bash
@@ -38,9 +38,9 @@ Take this as a quick personal project.
     ```bash
     pip install ttkthemes
     ```
-3. Execute the application:
+3. Compile:
     ```bash
-    python main.py
+    pyinstaller --windowed --onefile main.py
     ```
 
 	
@@ -61,6 +61,7 @@ Take this as a quick personal project.
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
 3. Tests selection is hardcoded
+
 
 
 
