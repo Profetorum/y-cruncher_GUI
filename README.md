@@ -22,7 +22,7 @@ Take this as a quick personal project.
 
 ### Installation - How to Use
 
-- Download the [latest release](https://github.com/Profetorum/y-cruncher_GUI/releases) .zip file ( [y-cruncher 0.8.6](https://www.numberworld.org/y-cruncher/) required or automatically downloaded )
+- Download the [latest release](https://github.com/Profetorum/y-cruncher_GUI/releases) .zip file ( [y-cruncher 0.8.6](https://www.numberworld.org/y-cruncher/) required or prompted to download )
 - Extract y-cruncher_gui.exe
 - Start the GUI , select tests or use presets , select test duration or leave auto values. Then start the stress test.
 
@@ -61,6 +61,7 @@ Take this as a quick personal project.
 1. In rare cases the y-cruncher process might not close correctly, requiring the user hard-killing it
 2. y-cruncher test process won't get killed if the GUI process gets force-closed
 3. Tests selection is hardcoded
+
 
 
 
