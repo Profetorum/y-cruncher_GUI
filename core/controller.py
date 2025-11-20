@@ -7,7 +7,6 @@ import os
 from typing import List, Tuple, Optional, Callable
 from .models import TestConfig
 from config.settings import TEST_CONFIG
-from utils.helpers import check_ycruncher_present
 
 class ProcessController:
     """Handles y-cruncher process execution and control"""
@@ -24,14 +23,19 @@ class ProcessController:
     def start_test(self, config: TestConfig, enabled_components: List[str], 
                    output_callback, completion_callback: Optional[Callable] = None) -> Tuple[bool, str]: 
         """Start the stress test process"""
+        # Import locally to avoid circular imports
+        from utils.helpers import check_ycruncher_present, get_ycruncher_executable_name
+        
         if self.is_running:
             return False, "Test is already running!"
         
         if not enabled_components:
             return False, "Please select at least one component!"
         
-        if not check_ycruncher_present():
-            return False, "y-cruncher.exe not found! Please download from https://www.numberworld.org/y-cruncher/"
+        # Use platform-appropriate check
+        exe_name = get_ycruncher_executable_name()
+        if not (os.path.exists(exe_name) or check_ycruncher_present()):
+            return False, f"{exe_name} not found! Please download from https://www.numberworld.org/y-cruncher/"
         
         cmd = self._build_command(config, enabled_components)
         
@@ -55,7 +59,7 @@ class ProcessController:
             return True, "Test started successfully"
             
         except FileNotFoundError:
-            return False, "y-cruncher.exe not found!"
+            return False, "y-cruncher executable not found!"
         except Exception as e:
             return False, f"Failed to start: {str(e)}"
     
@@ -81,7 +85,13 @@ class ProcessController:
     
     def _build_command(self, config: TestConfig, enabled_components: List[str]) -> List[str]:
         """Build the y-cruncher command with parameters"""
-        cmd = ["y-cruncher.exe", "colors:1", "console:linux-vterm", "stress"]
+        # Import locally to avoid circular imports
+        from utils.helpers import get_ycruncher_executable_name
+        
+        # Determine executable name based on platform
+        exe_name = get_ycruncher_executable_name()
+        
+        cmd = [exe_name, "colors:1", "console:linux-vterm", "stress"]
         
         if config.memory.strip() and config.memory.lower() != "auto":
             cmd.append(f"-M:{config.memory}")

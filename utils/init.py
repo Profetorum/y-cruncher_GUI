@@ -1,5 +1,8 @@
-# Utilities package
-from .helpers import check_ycruncher_present
-from .settings_manager import SettingsManager
-
-__all__ = ['check_ycruncher_present', 'SettingsManager']
+"""Utilities package"""
+# Keep this file minimal to avoid circular imports
+__all__ = [
+    'check_ycruncher_present', 
+    'get_ycruncher_executable_name',
+    'SettingsManager', 
+    'YCruncherExtractor'
+]
